@@ -83,4 +83,10 @@ class CartItemNotFoundException(AppException):
     def __init__(self, cart_id: int, product_id: int):
         message = f"Cart item for cart ID {cart_id} and product ID {product_id} not found."
         super().__init__(message)
-        
+
+
+
+class PermmisionError(AppException):
+    status_code: int = 403  # Forbidden status code
+    def __init__(self, message: str = "You do not have permission to perform this action."):
+        super().__init__(message)

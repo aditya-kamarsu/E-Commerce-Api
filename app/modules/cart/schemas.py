@@ -15,6 +15,7 @@ class UpdateCartItemRequestSchema(BaseModel):
 
 
 class CartItemResponseSchema(BaseModel):
+    id: int
     product_id: int
     product_name: str
     price: Decimal

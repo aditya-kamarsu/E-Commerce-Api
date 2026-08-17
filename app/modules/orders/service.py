@@ -6,7 +6,8 @@ from app.modules.orders.models import Order, OrderItem
 from app.modules.orders.repository import OrderItemRepository, OrderRepository
 from app.modules.orders.utils import OrderStatus
 from app.modules.products.repository import ProductRepository
-from app.modules.user.utils import UserRole
+from app.core.enums import UserRole
+from app.modules.addresses.repository import AddressRepository
 
 
 
@@ -18,24 +19,40 @@ class OrderService:
                  cartItemRepository: CartItemRepository,
                  productRepository: ProductRepository, 
                  orderRepository: OrderRepository,
-                 orderItemRepository: OrderItemRepository
+                 orderItemRepository: OrderItemRepository,
+                 addressRepository: AddressRepository
                  ):
         self.cartRepository = cartRepository
         self.productRepository = productRepository
         self.orderRepository = orderRepository
         self.orderItemRepository = orderItemRepository
+        self.addressRepository = addressRepository
         self.cartItemRepository = cartItemRepository
 
-    def create_order(self, db, user_id):
+    def create_order(self, db, user_id, address_id):
         try:
             cart,cart_items = self._validate_cart(db, user_id)
 
             products, total = self._calculate_total(db, cart_items)
 
+            address = self.addressRepository.get_by_id(db, address_id)
+
+            if not address:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Address not found."
+                )
+            if address.user_id != user_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You are not authorized to use this address."
+                )
+            
             order = self.orderRepository.create_order(
                 db,
                 Order(
                     user_id=user_id,
+                    address_id=address_id,
                     total_amount=total,
                     shipping_fee=0,
                     tax_amount=0,

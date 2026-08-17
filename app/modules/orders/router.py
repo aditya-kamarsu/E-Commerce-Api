@@ -1,7 +1,7 @@
 
 from app.core.dependencies import get_db
 from app.modules.auth.dependencies import get_current_user
-from app.modules.orders.schemas import OrderResponse
+from app.modules.orders.schemas import CreateOrderRequest, OrderResponse
 from app.modules.orders.service import OrderService
 from app.modules.user.models import User
 from fastapi import APIRouter, Depends
@@ -16,11 +16,12 @@ order_Routes = APIRouter(
 
 
 @order_Routes.post("/",response_model=OrderResponse)
-async def create_order(db = Depends(get_db),
+async def create_order(request: CreateOrderRequest,
+                       db = Depends(get_db),
                         user: User = Depends(get_current_user), 
                         order_service: OrderService = Depends(get_order_service)
                         ):
-    order = order_service.create_order(db, user.id)
+    order = order_service.create_order(db, user.id, request.address_id)
     return order
 
 

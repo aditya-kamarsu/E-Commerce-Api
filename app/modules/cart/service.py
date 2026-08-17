@@ -238,6 +238,7 @@ class CartService:
 
             response_items.append(
                 CartItemResponseSchema(
+                    id=item.id,
                     product_id=product.id,
                     product_name=product.name,
                     price=product.price,

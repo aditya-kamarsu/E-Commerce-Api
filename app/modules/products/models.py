@@ -14,6 +14,10 @@ class Product(Base):
         nullable=False
     )
 
+    category_id: Mapped[int] = mapped_column(
+    ForeignKey("categories.id"),
+    nullable=False)
+
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     brand: Mapped[str|None] = mapped_column(String(255), nullable=True)
@@ -26,4 +30,8 @@ class Product(Base):
     seller: Mapped["User"] = relationship("User", back_populates="products")
     cart_items: Mapped[list["CartItem"]] = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
     order_items: Mapped[list["OrderItem"]] = relationship("OrderItem", back_populates="product", cascade="all, delete-orphan")
+    category: Mapped["Category"] = relationship(
+        "Category",
+        back_populates="products"
+        )
     

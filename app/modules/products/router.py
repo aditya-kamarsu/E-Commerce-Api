@@ -1,11 +1,15 @@
 
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
+from app.core.authorization import require_role
 from app.core.dependencies import get_db
+from app.core.enums import UserRole
 from app.modules.products.dependencies import get_product_service
 from app.modules.products.repository import ProductRepository
-from app.modules.products.schemas import ProductResponse, UpdateProduct,CreateProduct
+from app.modules.products.schemas import ProductQueryParams, ProductResponse, UpdateProduct,CreateProduct
 from app.modules.products.service import ProductService
 from app.modules.auth.dependencies import get_current_user
 from app.modules.user.models import User
@@ -29,7 +33,9 @@ product_router = APIRouter(
 def create_product(
     product_data: CreateProduct,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(
+        require_role(UserRole.SELLER, UserRole.ADMIN)
+    ),
     product_service: ProductService = Depends(get_product_service),
 ):
     
@@ -44,13 +50,13 @@ def create_product(
 
 @product_router.get("/", response_model=list[ProductResponse], status_code=status.HTTP_200_OK)
 def get_all_products(
+    query:Annotated[ProductQueryParams, Query()],
     db: Session = Depends(get_db),
-    offset: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service)
+    
 ):
-    return product_service.get_all_products_service(db, offset, limit)
-
+    return product_service.get_products_service(db, query)
+    
     
 
 @product_router.get("/{product_id}", 
@@ -71,7 +77,9 @@ def get_product_by_id(
 def update_product(product_id: int,
                    product_update: UpdateProduct,
                     db: Session = Depends(get_db),
-                    current_user: User = Depends(get_current_user),
+                    current_user: User = Depends(
+                        require_role(UserRole.ADMIN, UserRole.SELLER)
+                    ),
                     product_service: ProductService = Depends(get_product_service)
                     ):
     return product_service.update_product_service(db,
@@ -85,7 +93,9 @@ def update_product(product_id: int,
 def delete_product(
     product_id: int, 
     db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user), 
+    current_user: User = Depends(
+        require_role(UserRole.ADMIN, UserRole.SELLER)
+    ),
     product_service: ProductService = Depends(get_product_service)
     ):
     return product_service.delete_product_service(db, product_id, current_user)

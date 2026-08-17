@@ -18,6 +18,12 @@ class Order(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False)   
 
+    
+    address_id: Mapped[int] = mapped_column(
+        ForeignKey("addresses.id"),
+        nullable=False
+        )
+
 
     shipping_fee: Mapped[Decimal] = mapped_column(
     Numeric(10, 2),
@@ -49,6 +55,10 @@ class Order(Base):
                                                  onupdate=func.now(),
                                                  nullable=False
                                                  )
+   
+    
+    
+    address: Mapped["Address"] = relationship("Address", back_populates="orders")
     
     user:Mapped["User"] = relationship("User", back_populates="orders")
 
@@ -95,5 +105,7 @@ class OrderItem(Base):
         "Product",
         back_populates="order_items"
     )
+
+   
 
     

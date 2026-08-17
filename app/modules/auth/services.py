@@ -1,13 +1,9 @@
-
-
-
-
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
+from app.modules.auth.exception import InvalidCredentialsException
 from app.modules.auth.jwt_token import create_access_token
-from app.modules.auth.schemas import LoginRequest, RegisterRequest, TokenResponse
+from app.modules.auth.schemas import LoginRequest, RegisterRequest, RegisterResponse, TokenResponse
 from app.modules.user.models import User
 from app.modules.user.repository import get_by_email,create_user
 from app.modules.auth.hashing import hash_password, verify_password
@@ -37,25 +33,26 @@ class AuthService():
         # Save user in database
         created_user = create_user(db,user)
 
-        return created_user
+        return RegisterResponse(
+            message="User registered successfully",
+            user=created_user
+        )
 
 
 
 
 
-    def login(self, db: Session, request: OAuth2PasswordRequestForm):
-        user = get_by_email(db, request.username)  # Assuming the username field contains the email
+    def login(self, db: Session, form_data: OAuth2PasswordRequestForm):
+        user = get_by_email(db, form_data.username)  # Assuming the username field contains the email
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
+            raise InvalidCredentialsException("Invalid email or password")
         
-        if not verify_password(request.password, user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
-            )
-        token = create_access_token({"sub": str(user.id)})
+        if not verify_password(form_data.password, user.password_hash):
+            raise InvalidCredentialsException("Invalid email or password")
+            
+        token = create_access_token({
+            "sub": str(user.id),
+            "role": user.role.value
+            })
         return TokenResponse(access_token=token, token_type="bearer")
 
